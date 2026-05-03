@@ -1,32 +1,24 @@
-/**
- * /api/languages.js
- * Vercel Serverless Function (FIXED)
- */
-
 const { getLanguageStats } = require("../lib/github");
 const { generateImage } = require("../lib/chart");
 const cache = require("../lib/cache");
 
 module.exports = async function handler(req, res) {
   try {
-    // ── Only GET ─────────────────────────────
     if (req.method !== "GET") {
       res.statusCode = 405;
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify({ error: "Method Not Allowed" }));
     }
 
-    // ── SAFE query parsing (IMPORTANT FIX) ───
-    const query = req.query || {};
+    const { searchParams } = new URL(req.url);
 
-    const username = query.username;
-    const theme = query.theme || "dark";
-    const layout = query.layout || "default";
-    const exclude = query.exclude || "";
-    const refresh = query.refresh || "0";
+    const username = searchParams.get("username");
+    const theme = searchParams.get("theme") || "dark";
+    const layout = searchParams.get("layout") || "default";
+    const exclude = searchParams.get("exclude") || "";
+    const refresh = searchParams.get("refresh") || "0";
 
-    // ── Validation ───────────────────────────
-    if (!username || typeof username !== "string") {
+    if (!username) {
       res.statusCode = 400;
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify({
@@ -48,7 +40,6 @@ module.exports = async function handler(req, res) {
 
     const cacheKey = `langs:${username}:${excludeList.sort().join(",")}`;
 
-    // ── Cache ────────────────────────────────
     let langs = refresh === "1" ? null : cache.get(cacheKey);
 
     if (!langs) {
@@ -66,14 +57,12 @@ module.exports = async function handler(req, res) {
       cache.set(cacheKey, langs);
     }
 
-    // ── Generate image ───────────────────────
     const imageBuffer = generateImage(langs, {
       theme: ["dark", "light"].includes(theme) ? theme : "dark",
       layout: ["default", "compact"].includes(layout) ? layout : "default",
       username,
     });
 
-    // ── SUCCESS RESPONSE (FIXED FOR VERCEL) ─
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/png");
     res.setHeader(
@@ -87,7 +76,6 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     console.error("[languages] Error:", err);
 
-    // ── ERROR IMAGE FALLBACK ────────────────
     try {
       const errImage = generateImage(
         [{ name: "Error fetching data", bytes: 1, percentage: 100 }],
@@ -99,10 +87,9 @@ module.exports = async function handler(req, res) {
       return res.end(errImage);
 
     } catch (e) {
-      // final fallback (never crash)
       res.statusCode = 500;
       res.setHeader("Content-Type", "application/json");
-      return res.end(JSON.stringify({ error: err.message }));
+      return res.end(JSON.stringify({ error: "Unexpected failure" }));
     }
   }
 };
