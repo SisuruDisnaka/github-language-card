@@ -1,0 +1,47 @@
+name: Refresh Language Cache
+
+on:
+  schedule:
+    # Runs every 6 hours
+    - cron: "0 */6 * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  refresh:
+    name: Ping API to refresh cache
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping language card endpoint
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+        run: |
+          # Force-refresh the cache by passing refresh=1
+          URL="${VERCEL_URL}/api/languages?username=${GH_USERNAME}&refresh=1"
+          echo "Refreshing cache at: $URL"
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ Cache refreshed successfully (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Unexpected response: HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+      - name: Verify dark theme
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+        run: |
+          curl -s -o /dev/null -w "Dark theme: HTTP %{http_code}\n" \
+            "${VERCEL_URL}/api/languages?username=${GH_USERNAME}&theme=dark"
+
+      - name: Verify light theme
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+        run: |
+          curl -s -o /dev/null -w "Light theme: HTTP %{http_code}\n" \
+            "${VERCEL_URL}/api/languages?username=${GH_USERNAME}&theme=light"

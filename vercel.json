@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "name": "github-lang-card",
+  "builds": [
+    {
+      "src": "api/languages.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/languages",
+      "dest": "/api/languages.js"
+    },
+    {
+      "src": "/",
+      "dest": "/api/languages.js"
+    }
+  ],
+  "env": {
+    "GITHUB_TOKEN": "@github_token"
+  },
+  "functions": {
+    "api/languages.js": {
+      "maxDuration": 30,
+      "memory": 512
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}

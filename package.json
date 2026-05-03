@@ -1,0 +1,25 @@
+{
+  "name": "github-lang-card",
+  "version": "1.0.0",
+  "description": "Dynamic GitHub language usage card as a PNG image.",
+  "main": "api/languages.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "node server.js",
+    "test": "node test/smoke.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.53"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "github",
+    "languages",
+    "card",
+    "svg",
+    "vercel"
+  ],
+  "license": "MIT"
+}
