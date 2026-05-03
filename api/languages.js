@@ -20,13 +20,15 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
+  const query = req.query || {};
+
   const {
     username,
     theme = "dark",
     layout = "default",
     exclude = "",
     refresh = "0",
-  } = req.query;
+  } = query;
 
   // ── Input validation ────────────────────────────────────────────────────────
   if (!username || typeof username !== "string") {
